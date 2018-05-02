@@ -1,15 +1,25 @@
 package main
 
 import (
-	v1 "github.com/yarntime/aiops/pkg/types"
-	"github.com/yarntime/aiops/pkg/controller"
-	io "io/ioutil"
 	"encoding/json"
+	"flag"
 	"github.com/golang/glog"
-	"net/http"
-
 	"github.com/gorilla/mux"
+	"github.com/yarntime/aiops/pkg/controller"
+	v1 "github.com/yarntime/aiops/pkg/types"
+	io "io/ioutil"
+	"net/http"
 )
+
+var (
+	apiserverAddress string
+)
+
+func init() {
+	flag.StringVar(&apiserverAddress, "apiserver_address", "192.168.254.45:8080", "Kubernetes apiserver address")
+	flag.Set("alsologtostderr", "true")
+	flag.Parse()
+}
 
 func main() {
 	customConfig := v1.CustomConfig{}
@@ -26,26 +36,27 @@ func main() {
 
 	config := &v1.Config{
 		CustomCfg: customConfig,
-		AppCfg: appConfig,
+		AppCfg:    appConfig,
+		Host:      apiserverAddress,
 	}
 
 	c := controller.NewController(config)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/scan", c.Scan).Methods("GET")
+	router.HandleFunc("/create", c.Create).Methods("GET")
 
 	glog.Fatal(http.ListenAndServe(":8080", router))
 }
 
 func LoadConfig(filename string, v interface{}) error {
 	data, err := io.ReadFile(filename)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	dataJson := []byte(data)
 	err = json.Unmarshal(dataJson, v)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 

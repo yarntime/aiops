@@ -1,18 +1,59 @@
 package mysql
 
 import (
+	"database/sql"
+	"fmt"
+	"github.com/golang/glog"
 	v1 "github.com/yarntime/aiops/pkg/types"
 )
 
+var peopleQuery = `
+SELECT
+    host,
+    instance_name,
+    metric,
+    monitor_types
+FROM
+    monitor_obj
+`
+
 type Worker struct {
-	//mysql data source name
 	Dsn string
 }
 
-func NewDBWorker(config *v1.Config) *Worker {
+func NewDBWorker(c *v1.Config) *Worker {
 	return &Worker{
-		Dsn: config.CustomCfg.Global.MysqlUser + ":" + config.CustomCfg.Global.MysqlPwd + "@tcp(" + config.CustomCfg.Global.MysqlHost + ")/" + config.CustomCfg.Global.MysqlDB,
+		Dsn: fmt.Sprintf("%s:%s@tcp(%s)/%s", c.CustomCfg.Global.MysqlUser, c.CustomCfg.Global.MysqlPwd, c.CustomCfg.Global.MysqlHost, c.CustomCfg.Global.MysqlDB),
 	}
 }
 
+func (w *Worker) List() []*v1.MonitorObject {
+	db, err := sql.Open("mysql", w.Dsn)
+	if err != nil {
+		glog.Error("Failed to connect to mysql server.")
+	}
+	defer db.Close()
 
+	rows, err := db.Query(peopleQuery)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	list := []*v1.MonitorObject{}
+	for rows.Next() {
+		m := new(v1.MonitorObject)
+		if err := rows.Scan(
+			&m.Host,
+			&m.InstanceName,
+			&m.Metric,
+			&m.MonitorTypes,
+		); err != nil {
+			glog.Errorf(err.Error())
+			panic(err)
+		}
+		list = append(list, m)
+	}
+
+	return list
+}
