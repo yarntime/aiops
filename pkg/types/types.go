@@ -58,7 +58,6 @@ type Config struct {
 }
 
 type MonitorObject struct {
-	Id           int
 	Host         string
 	InstanceName string
 	Metric       string

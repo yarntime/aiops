@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang/glog"
 	v1 "github.com/yarntime/aiops/pkg/types"
 )
@@ -28,9 +29,12 @@ func NewDBWorker(c *v1.Config) *Worker {
 }
 
 func (w *Worker) List() []*v1.MonitorObject {
+	list := []*v1.MonitorObject{}
+
 	db, err := sql.Open("mysql", w.Dsn)
 	if err != nil {
 		glog.Error("Failed to connect to mysql server.")
+		return list
 	}
 	defer db.Close()
 
@@ -40,7 +44,6 @@ func (w *Worker) List() []*v1.MonitorObject {
 	}
 	defer rows.Close()
 
-	list := []*v1.MonitorObject{}
 	for rows.Next() {
 		m := new(v1.MonitorObject)
 		if err := rows.Scan(

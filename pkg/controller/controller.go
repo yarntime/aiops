@@ -1,12 +1,12 @@
 package controller
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/yarntime/aiops/pkg/mysql"
 	v1 "github.com/yarntime/aiops/pkg/types"
 	"net/http"
-	//"fmt"
-	"encoding/json"
 )
 
 type Controller struct {
@@ -24,10 +24,10 @@ func NewController(c *v1.Config) *Controller {
 func (c *Controller) Create(w http.ResponseWriter, req *http.Request) {
 	glog.V(3).Info("scan the monitor object, create the cron jobs")
 
-	/*	monitorObjects := c.dbWorker.List()
-		for monitorObject := range monitorObjects {
-			fmt.Printf("%v\n", monitorObject)
-		}*/
+	monitorObjects := c.dbWorker.List()
+	for monitorObject := range monitorObjects {
+		fmt.Printf("%v\n", monitorObject)
+	}
 
 	res := &v1.ApiResponse{
 		Code:    200,
