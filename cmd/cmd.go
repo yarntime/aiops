@@ -9,6 +9,7 @@ import (
 	v1 "github.com/yarntime/aiops/pkg/types"
 	io "io/ioutil"
 	"net/http"
+	"reflect"
 )
 
 var (
@@ -33,6 +34,8 @@ func main() {
 	if err != nil {
 		glog.Fatal("Failed to load application config." + err.Error())
 	}
+
+	initAppConfig(customConfig, appConfig)
 
 	config := &v1.Config{
 		CustomCfg: customConfig,
@@ -61,4 +64,21 @@ func LoadConfig(filename string, v interface{}) error {
 	}
 
 	return nil
+}
+
+func initAppConfig(customConfig v1.CustomConfig, appConfig v1.ApplicationConfig) {
+	globalFiled := reflect.TypeOf(customConfig.Global)
+	globalValue := reflect.ValueOf(customConfig.Global)
+	params := []string{}
+	for i := 0; i < globalFiled.NumField(); i++ {
+		f := globalFiled.Field(i)
+		_, skip := f.Tag.Lookup("skip")
+		if skip {
+			continue
+		}
+		params = append(params, "--"+f.Tag.Get("json")+"="+globalValue.Field(i).Interface().(string))
+	}
+	for i := 0; i < len(appConfig.App); i++ {
+		appConfig.App[i].Params = append(appConfig.App[i].Params, params...)
+	}
 }

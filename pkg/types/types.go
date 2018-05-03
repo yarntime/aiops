@@ -1,9 +1,15 @@
 package types
 
+var (
+	BaseLine           = 1
+	CapacityPrediction = 2
+)
+
 type Application struct {
 	Application string   `json:"application"`
 	Id          int      `json:"id"`
-	Cmd         string   `json:"cmd"`
+	Cmd         []string `json:"cmd"`
+	Cron        string   `json:"cron"`
 	Params      []string `json:"params"`
 }
 
@@ -12,7 +18,8 @@ type ApplicationConfig struct {
 }
 
 type GlobalConfig struct {
-	Image     string `json:"image"`
+	Image     string `json:"image" skip:"true"`
+	Namespace string `json:"namespace" skip:"true"`
 	ESHosts   string `json:"es_hosts"`
 	Index     string `json:"index"`
 	DocType   string `json:"doc_type"`
