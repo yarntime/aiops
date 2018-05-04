@@ -52,6 +52,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/health", health).Methods("GET")
 	router.HandleFunc("/create", c.Create).Methods("GET")
+	router.HandleFunc("/delete", c.Delete).Methods("GET")
 
 	glog.Info("http server started.")
 	glog.Fatal(http.ListenAndServe(":8080", router))

@@ -28,6 +28,7 @@ func NewController(c *v1.Config) *Controller {
 func (c *Controller) Create(w http.ResponseWriter, req *http.Request) {
 	glog.V(3).Info("scan the monitor objects, create the cron jobs")
 
+	c.jobController.DeleteTrainingJob(c.customConfig)
 	monitorObjects := c.dbWorker.List()
 	for _, monitorObject := range monitorObjects {
 		fmt.Printf("%v\n", monitorObject)
@@ -41,6 +42,17 @@ func (c *Controller) Create(w http.ResponseWriter, req *http.Request) {
 	res := &v1.ApiResponse{
 		Code:    200,
 		Message: "Successful to scan monitor objects.",
+	}
+
+	r, _ := json.Marshal(res)
+	w.Write(r)
+}
+
+func (c *Controller) Delete(w http.ResponseWriter, req *http.Request) {
+	c.jobController.DeleteTrainingJob(c.customConfig)
+	res := &v1.ApiResponse{
+		Code:    200,
+		Message: "Successful to delete all training jobs.",
 	}
 
 	r, _ := json.Marshal(res)

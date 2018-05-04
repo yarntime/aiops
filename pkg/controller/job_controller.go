@@ -91,18 +91,19 @@ func componentResources(cpu string) v1.ResourceRequirements {
 
 func (jc *JobController) CreateTrainingJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application) {
 	job := componentCronJob(obj, customConf, appConf)
-	selector := labels.Set(job.Labels).AsSelector()
-	listOptions := meta_v1.ListOptions{
-		LabelSelector: selector.String(),
-	}
-	previousJobs, _ := jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).List(listOptions)
-
-	for _, previousJob := range previousJobs.Items {
-		jc.k8sClient.BatchV2alpha1().CronJobs(previousJob.Namespace).Delete(previousJob.Name, &meta_v1.DeleteOptions{})
-	}
-
 	_, err := jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).Create(job)
 	if err != nil {
 		glog.Errorf("Failed to create training job: %s/%s, %s", job.Namespace, job.Name, err.Error())
+	}
+}
+
+func (jc *JobController) DeleteTrainingJob(customConf types.CustomConfig) {
+	selector := labels.Set(map[string]string{"type": AIOpsJobs}).AsSelector()
+	listOptions := meta_v1.ListOptions{
+		LabelSelector: selector.String(),
+	}
+	allJobs, _ := jc.k8sClient.BatchV2alpha1().CronJobs(customConf.Global.Namespace).List(listOptions)
+	for _, job := range allJobs.Items {
+		jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).Delete(job.Name, &meta_v1.DeleteOptions{})
 	}
 }
