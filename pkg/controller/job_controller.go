@@ -7,6 +7,7 @@ import (
 	"github.com/yarntime/aiops/pkg/types"
 	"k8s.io/apimachinery/pkg/api/resource"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	batchv1 "k8s.io/client-go/pkg/apis/batch/v1"
@@ -15,6 +16,7 @@ import (
 )
 
 const (
+	AIOpsJobs           = "skyform-ai-job"
 	ContainerNamePrefix = "training-job"
 )
 
@@ -32,6 +34,7 @@ func NewJobController(c *types.Config) *JobController {
 
 func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application) *batch.CronJob {
 	labels := map[string]string{
+		"type":     AIOpsJobs,
 		"tier":     appConf.Application,
 		"host":     obj.Host,
 		"instance": obj.InstanceName,
@@ -88,7 +91,17 @@ func componentResources(cpu string) v1.ResourceRequirements {
 
 func (jc *JobController) CreateTrainingJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application) {
 	job := componentCronJob(obj, customConf, appConf)
-	_, err := jc.k8sClient.BatchV2alpha1().CronJobs(customConf.Global.Namespace).Create(job)
+	selector := labels.Set(job.Labels).AsSelector()
+	listOptions := meta_v1.ListOptions{
+		LabelSelector: selector.String(),
+	}
+	previousJobs, _ := jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).List(listOptions)
+
+	for _, previousJob := range previousJobs.Items {
+		jc.k8sClient.BatchV2alpha1().CronJobs(previousJob.Namespace).Delete(previousJob.Name, &meta_v1.DeleteOptions{})
+	}
+
+	_, err := jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).Create(job)
 	if err != nil {
 		glog.Errorf("Failed to create training job: %s/%s, %s", job.Namespace, job.Name, err.Error())
 	}
