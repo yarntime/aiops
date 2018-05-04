@@ -13,24 +13,28 @@ import (
 )
 
 var (
-	apiserverAddress string
+	apiserverAddress  string
+	globalConfig      string
+	applicationConfig string
 )
 
 func init() {
 	flag.StringVar(&apiserverAddress, "apiserver_address", "192.168.254.45:8080", "Kubernetes apiserver address")
+	flag.StringVar(&globalConfig, "global_config_file", "G:/opt/config.json", "global config file")
+	flag.StringVar(&applicationConfig, "applicationConfig", "G:/opt/application.json", "application config file")
 	flag.Set("alsologtostderr", "true")
 	flag.Parse()
 }
 
 func main() {
 	customConfig := v1.CustomConfig{}
-	err := LoadConfig("G:/opt/config.json", &customConfig)
+	err := LoadConfig(globalConfig, &customConfig)
 	if err != nil {
 		glog.Fatal("Failed to load custom config.")
 	}
 
 	appConfig := v1.ApplicationConfig{}
-	err = LoadConfig("G:/opt/application.json", &appConfig)
+	err = LoadConfig(applicationConfig, &appConfig)
 	if err != nil {
 		glog.Fatal("Failed to load application config." + err.Error())
 	}
@@ -46,8 +50,10 @@ func main() {
 	c := controller.NewController(config)
 
 	router := mux.NewRouter()
+	router.HandleFunc("/health", health).Methods("GET")
 	router.HandleFunc("/create", c.Create).Methods("GET")
 
+	glog.Info("http server started.")
 	glog.Fatal(http.ListenAndServe(":8080", router))
 }
 
@@ -81,4 +87,8 @@ func initAppConfig(customConfig v1.CustomConfig, appConfig v1.ApplicationConfig)
 	for i := 0; i < len(appConfig.App); i++ {
 		appConfig.App[i].Params = append(appConfig.App[i].Params, params...)
 	}
+}
+
+func health(w http.ResponseWriter, _ *http.Request) {
+	w.Write([]byte("ok."))
 }
