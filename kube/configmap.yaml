@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aiops-config
+  namespace: sky-firmament
+  labels:
+    app: aiops
+    type: api
+data:
+  config.json: |-
+    {
+       "global": {
+             "image":"nginx-1.13.3",
+             "namespace":"default",
+             "es_hosts":"102.2.2.2:9200",
+             "index":"test",
+             "doc_type":"iii",
+             "timename":"datt",
+             "mysql_host":"192.168.254.44:31786",
+             "mysql_user":"root",
+             "mysql_pwd":"password",
+             "mysql_db":"skyform_aiops"
+        }
+    }
+  application.json: |-
+    {
+        "app": [{
+             "application": "capacity_prediction",
+             "id": 2,
+             "cmd": ["sleep","5000000"],
+             "cron": "*/5 * * * *",
+             "params": [
+             "--period=1",
+             "--freq=1",
+             "--confidence_interval=1",
+             "--threshold=1"]
+        },
+        {
+             "application": "baseline",
+             "id": 1,
+             "cmd": ["sleep","5000000"],
+             "cron": "*/5 * * * *",
+             "params": [
+             "--period=1",
+             "--freq=1",
+             "--confidence_interval=1",
+             "--threshold=1"]
+        }]
+    }

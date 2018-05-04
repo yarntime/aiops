@@ -1,0 +1,57 @@
+# exposing river as a service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: aiops
+    type: api
+  name: aiops
+  namespace: sky-firmament
+spec:
+  type: NodePort
+  ports:
+  - name: api
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: aiops
+    type: api
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: aiops
+    type: api
+  name: aiops
+  namespace: sky-firmament
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aiops
+      type: api
+  template:
+    metadata:
+      labels:
+        app: aiops
+        type: api
+      name: aiops
+    spec:
+      serviceAccountName: aiops
+      containers:
+      - name: aiops
+        image: rivernet/aiops:4.2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: api
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/aiops/
+      volumes:
+      - name: config
+        configMap:
+          name: aiops-config

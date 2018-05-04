@@ -19,9 +19,9 @@ var (
 )
 
 func init() {
-	flag.StringVar(&apiserverAddress, "apiserver_address", "192.168.254.45:8080", "Kubernetes apiserver address")
-	flag.StringVar(&globalConfig, "global_config_file", "G:/opt/config.json", "global config file")
-	flag.StringVar(&applicationConfig, "applicationConfig", "G:/opt/application.json", "application config file")
+	flag.StringVar(&apiserverAddress, "apiserver_address", "", "Kubernetes apiserver address")
+	flag.StringVar(&globalConfig, "global_config_file", "/etc/aiops/config.json", "global config file")
+	flag.StringVar(&applicationConfig, "applicationConfig", "/etc/aiops/application.json", "application config file")
 	flag.Set("alsologtostderr", "true")
 	flag.Parse()
 }
