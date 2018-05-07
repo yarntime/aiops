@@ -13,6 +13,7 @@ import (
 	batchv1 "k8s.io/client-go/pkg/apis/batch/v1"
 	batch "k8s.io/client-go/pkg/apis/batch/v2alpha1"
 	"k8s.io/client-go/pkg/util"
+	"strconv"
 )
 
 const (
@@ -34,11 +35,9 @@ func NewJobController(c *types.Config) *JobController {
 
 func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application) *batch.CronJob {
 	labels := map[string]string{
-		"type":     AIOpsJobs,
-		"tier":     appConf.Application,
-		"host":     obj.Host,
-		"instance": obj.InstanceName,
-		"metric":   obj.Metric,
+		"type": AIOpsJobs,
+		"tier": appConf.Application,
+		"id":   strconv.Itoa(obj.ID),
 	}
 	objParams := []string{
 		fmt.Sprintf("--host=%s", obj.Host),
@@ -66,7 +65,7 @@ func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, a
 							Containers: []v1.Container{
 								{
 									Name:      ContainerNamePrefix,
-									Image:     customConf.Global.Image,
+									Image:     appConf.Image,
 									Command:   appConf.Cmd,
 									Args:      allParams,
 									Resources: componentResources("500m"),

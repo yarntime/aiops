@@ -8,6 +8,7 @@ var (
 type Application struct {
 	Application string   `json:"application"`
 	Id          int      `json:"id"`
+	Image       string   `json:image`
 	Cmd         []string `json:"cmd"`
 	Cron        string   `json:"cron"`
 	Params      []string `json:"params"`
@@ -18,7 +19,6 @@ type ApplicationConfig struct {
 }
 
 type GlobalConfig struct {
-	Image     string `json:"image" skip:"true"`
 	Namespace string `json:"namespace" skip:"true"`
 	ESHosts   string `json:"es_hosts"`
 	Index     string `json:"index"`
@@ -65,6 +65,7 @@ type Config struct {
 }
 
 type MonitorObject struct {
+	ID           int
 	Host         string
 	InstanceName string
 	Metric       string

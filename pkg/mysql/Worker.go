@@ -10,6 +10,7 @@ import (
 
 var peopleQuery = `
 SELECT
+    id,
     host,
     instance_name,
     metric,
