@@ -10,13 +10,12 @@ data:
   config.json: |-
     {
        "global": {
-             "image":"nginx-1.13.3",
              "namespace":"default",
-             "es_hosts":"102.2.2.2:9200",
-             "index":"test",
-             "doc_type":"iii",
-             "timename":"datt",
-             "mysql_host":"192.168.254.44:31786",
+             "es_hosts":"10.15.1.30:9200",
+             "index":"metric",
+             "doc_type":"metric",
+             "timename":"createTime",
+             "mysql_host":"10.15.21.240:32015",
              "mysql_user":"root",
              "mysql_pwd":"password",
              "mysql_db":"skyform_aiops"
@@ -27,23 +26,27 @@ data:
         "app": [{
              "application": "capacity_prediction",
              "id": 2,
-             "cmd": ["sleep","5000000"],
-             "cron": "*/5 * * * *",
+             "image": "registry.harbor:5000/sky-aiops/capacity:zw180507",
+             "cmd": ["python","main.py"],
+             "cron": "*/30 * * * *",
              "params": [
-             "--period=1",
-             "--freq=1",
-             "--confidence_interval=1",
-             "--threshold=1"]
+             "--period=100",
+             "--freq=1T",
+			 "--timedelta=144000",
+             "--confidence_interval=0.9",
+             "--threshold=9000"]
         },
         {
              "application": "baseline",
              "id": 1,
-             "cmd": ["sleep","5000000"],
-             "cron": "*/5 * * * *",
+             "image": "registry.harbor:5000/sky-aiops/baseline:zw180507",
+             "cmd": ["python","main.py"],
+             "cron": "*/30 * * * *",
              "params": [
-             "--period=1",
-             "--freq=1",
-             "--confidence_interval=1",
-             "--threshold=1"]
+             "--period=100",
+             "--freq=1T",
+			 "--timedelta=144000",
+             "--confidence_interval=0.9",
+             "--threshold=9000"]
         }]
     }
