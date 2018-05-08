@@ -53,9 +53,9 @@ func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, a
 		},
 		Spec: batch.CronJobSpec{
 			Schedule:                   appConf.Cron,
-			ConcurrencyPolicy:          batch.ForbidConcurrent,
-			SuccessfulJobsHistoryLimit: util.Int32Ptr(5),
-			FailedJobsHistoryLimit:     util.Int32Ptr(10),
+			ConcurrencyPolicy:          batch.ConcurrencyPolicy(customConf.Global.ConcurrencyPolicy),
+			SuccessfulJobsHistoryLimit: util.Int32Ptr(customConf.Global.SuccessfulJobsHistoryLimit),
+			FailedJobsHistoryLimit:     util.Int32Ptr(customConf.Global.FailedJobsHistoryLimit),
 			JobTemplate: batch.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Parallelism: util.Int32Ptr(1),
@@ -64,11 +64,12 @@ func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, a
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{
 								{
-									Name:      ContainerNamePrefix,
-									Image:     appConf.Image,
-									Command:   appConf.Cmd,
-									Args:      allParams,
-									Resources: componentResources("500m"),
+									Name:            ContainerNamePrefix,
+									Image:           appConf.Image,
+									ImagePullPolicy: v1.PullPolicy(customConf.Global.ImagePullPolicy),
+									Command:         appConf.Cmd,
+									Args:            allParams,
+									Resources:       componentResources("500m"),
 								},
 							},
 							RestartPolicy: v1.RestartPolicyOnFailure,

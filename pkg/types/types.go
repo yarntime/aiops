@@ -19,15 +19,19 @@ type ApplicationConfig struct {
 }
 
 type GlobalConfig struct {
-	Namespace string `json:"namespace" skip:"true"`
-	ESHosts   string `json:"es_hosts"`
-	Index     string `json:"index"`
-	DocType   string `json:"doc_type"`
-	Timename  string `json:"timename"`
-	MysqlHost string `json:"mysql_host"`
-	MysqlUser string `json:"mysql_user"`
-	MysqlPwd  string `json:"mysql_pwd"`
-	MysqlDB   string `json:"mysql_db"`
+	Namespace                  string `json:"namespace" skip:"true"`
+	SuccessfulJobsHistoryLimit int32  `json:"sucessful_jobs_history_limit" skip:"true"`
+	FailedJobsHistoryLimit     int32  `json:"failed_jobs_history_limit" skip:"true"`
+	ConcurrencyPolicy          string `json:"concurrency_policy" skip:"true"`
+	ImagePullPolicy            string `json:"image_pull_policy" skip:"true"`
+	ESHosts                    string `json:"es_hosts"`
+	Index                      string `json:"index"`
+	DocType                    string `json:"doc_type"`
+	Timename                   string `json:"timename"`
+	MysqlHost                  string `json:"mysql_host"`
+	MysqlUser                  string `json:"mysql_user"`
+	MysqlPwd                   string `json:"mysql_pwd"`
+	MysqlDB                    string `json:"mysql_db"`
 }
 
 type CapacityPredictionConfig struct {
