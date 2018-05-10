@@ -10,19 +10,16 @@ data:
   config.json: |-
     {
        "global": {
-             "namespace":"default",
-             "sucessful_jobs_history_limit":1,
-             "failed_jobs_history_limit":2,
-             "concurrency_policy":"Forbid",
-             "image_pull_policy":"Always",
-             "es_hosts":"10.15.1.30:9200",
-             "index":"metric",
-             "doc_type":"metric",
-             "timename":"createTime",
              "mysql_host":"192.168.254.44:31786",
              "mysql_user":"root",
              "mysql_pwd":"password",
-             "mysql_db":"skyform_aiops"
+             "mysql_db":"skyform_aiops",
+             "params": [
+             "--es_hosts=10.15.1.30:9200",
+             "--index=metric",
+             "--doc_type=metric",
+             "--timename=createTime"
+             ]
         }
     }
   application.json: |-
@@ -33,12 +30,7 @@ data:
              "image": "registry.harbor:5000/sky-aiops/capacity:zw180507",
              "cmd": ["python","main.py"],
              "cron": "*/30 * * * *",
-             "params": [
-             "--period=100",
-             "--freq=1T",
-             "--timedelta=144000",
-             "--confidence_interval=0.9",
-             "--threshold=9000"]
+             "params": []
         },
         {
              "application": "baseline",
@@ -46,11 +38,6 @@ data:
              "image": "registry.harbor:5000/sky-aiops/baseline:zw180507",
              "cmd": ["python","main.py"],
              "cron": "*/30 * * * *",
-             "params": [
-             "--period=100",
-             "--freq=1T",
-             "--timedelta=144000",
-             "--confidence_interval=0.9",
-             "--threshold=9000"]
+             "params":[]
         }]
     }

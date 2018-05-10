@@ -1,10 +1,5 @@
 package types
 
-var (
-	BaseLine           = 1
-	CapacityPrediction = 2
-)
-
 type Application struct {
 	Application string   `json:"application"`
 	Id          int      `json:"id"`
@@ -19,47 +14,20 @@ type ApplicationConfig struct {
 }
 
 type GlobalConfig struct {
-	Namespace                  string `json:"namespace" skip:"true"`
-	SuccessfulJobsHistoryLimit int32  `json:"sucessful_jobs_history_limit" skip:"true"`
-	FailedJobsHistoryLimit     int32  `json:"failed_jobs_history_limit" skip:"true"`
-	ConcurrencyPolicy          string `json:"concurrency_policy" skip:"true"`
-	ImagePullPolicy            string `json:"image_pull_policy" skip:"true"`
-	ESHosts                    string `json:"es_hosts"`
-	Index                      string `json:"index"`
-	DocType                    string `json:"doc_type"`
-	Timename                   string `json:"timename"`
-	MysqlHost                  string `json:"mysql_host"`
-	MysqlUser                  string `json:"mysql_user"`
-	MysqlPwd                   string `json:"mysql_pwd"`
-	MysqlDB                    string `json:"mysql_db"`
-}
-
-type CapacityPredictionConfig struct {
-	ID                 int    `json:"id"`
-	Name               string `json:"name"`
-	Freq               string `json:"freq"`
-	Timedelta          string `json:"timedelta"`
-	Period             string `json:"period"`
-	ConfidenceInterval string `json:"confidence_interval"`
-	Threshold          string `json:"threshold"`
-	TriggerTime        string `json:"trigger_time"`
-	TriggerFreq        string `json:"trigger_freq"`
-}
-
-type BaseLineConfig struct {
-	ID                 int    `json:"id"`
-	Name               string `json:"name"`
-	Freq               string `json:"freq"`
-	Period             string `json:"period"`
-	ConfidenceInterval string `json:"confidence_interval"`
-	TriggerTime        string `json:"trigger_time"`
-	TriggerFreq        string `json:"trigger_freq"`
+	MysqlHost                  string   `json:"mysql_host"`
+	MysqlUser                  string   `json:"mysql_user"`
+	MysqlPwd                   string   `json:"mysql_pwd"`
+	MysqlDB                    string   `json:"mysql_db"`
+	Params                     []string `json:"params"`
+	Namespace                  string
+	SuccessfulJobsHistoryLimit int32
+	FailedJobsHistoryLimit     int32
+	ConcurrencyPolicy          string
+	ImagePullPolicy            string
 }
 
 type CustomConfig struct {
-	Global             GlobalConfig             `json:"global"`
-	CapacityPrediction CapacityPredictionConfig `json:"capacity_prediction"`
-	BaseLine           BaseLineConfig           `json:"baseline"`
+	Global GlobalConfig `json:"global"`
 }
 
 type Config struct {
@@ -74,6 +42,8 @@ type MonitorObject struct {
 	InstanceName string
 	Metric       string
 	MonitorTypes int
+	ESIndex      string
+	ESType       string
 }
 
 type ApiResponse struct {

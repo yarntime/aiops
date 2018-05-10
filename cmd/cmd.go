@@ -13,13 +13,31 @@ import (
 )
 
 var (
-	apiserverAddress  string
+	apiserverAddress           string
+	jobNamespace               string
+	successfulJobsHistoryLimit int
+	failedJobsHistoryLimit     int
+	concurrencyPolicy          string
+	imagePullPolicy            string
+	/*mysqlHost string
+	mysqlUser string
+	mysqlPassword string
+	mysqlDB  string*/
 	globalConfig      string
 	applicationConfig string
 )
 
 func init() {
 	flag.StringVar(&apiserverAddress, "apiserver_address", "", "Kubernetes apiserver address")
+	flag.StringVar(&jobNamespace, "job_namespace", "default", "cronjob namespace")
+	flag.IntVar(&successfulJobsHistoryLimit, "sucessful_jobs_history_limit", 1, "sucessful jobs history limit")
+	flag.IntVar(&failedJobsHistoryLimit, "failed_jobs_history_limit", 2, "failed jobs history limit")
+	flag.StringVar(&concurrencyPolicy, "concurrency_policy", "Forbid", "concurrency policy, support Allow, Forbid and Replace, default to Forbid")
+	flag.StringVar(&imagePullPolicy, "image_pull_policy", "IfNotPresent", "image pull policy, support Always, Never and IfNotPresent, default to IfNotPresent")
+	/*flag.StringVar(&mysqlHost, "mysql_host", "192.168.254.44:31786", "mysql host")
+	flag.StringVar(&mysqlUser, "mysql_user", "root", "mysql user")
+	flag.StringVar(&mysqlPassword, "mysql_password", "password", "mysql password")
+	flag.StringVar(&mysqlDB, "mysql_db", "skyform_aiops", "mysql db")*/
 	flag.StringVar(&globalConfig, "global_config_file", "/etc/aiops/config.json", "global config file")
 	flag.StringVar(&applicationConfig, "applicationConfig", "/etc/aiops/application.json", "application config file")
 	flag.Set("alsologtostderr", "true")
@@ -27,16 +45,24 @@ func init() {
 }
 
 func main() {
-	customConfig := v1.CustomConfig{}
+	customConfig := v1.CustomConfig{
+		Global: v1.GlobalConfig{
+			Namespace:                  jobNamespace,
+			SuccessfulJobsHistoryLimit: int32(successfulJobsHistoryLimit),
+			FailedJobsHistoryLimit:     int32(failedJobsHistoryLimit),
+			ConcurrencyPolicy:          concurrencyPolicy,
+			ImagePullPolicy:            imagePullPolicy,
+		},
+	}
 	err := LoadConfig(globalConfig, &customConfig)
 	if err != nil {
-		glog.Fatal("Failed to load custom config.")
+		glog.Fatalf("Failed to load custom config. %s", err.Error())
 	}
 
 	appConfig := v1.ApplicationConfig{}
 	err = LoadConfig(applicationConfig, &appConfig)
 	if err != nil {
-		glog.Fatal("Failed to load application config." + err.Error())
+		glog.Fatalf("Failed to load application config.%s", err.Error())
 	}
 
 	initAppConfig(customConfig, appConfig)
@@ -76,17 +102,27 @@ func LoadConfig(filename string, v interface{}) error {
 func initAppConfig(customConfig v1.CustomConfig, appConfig v1.ApplicationConfig) {
 	globalFiled := reflect.TypeOf(customConfig.Global)
 	globalValue := reflect.ValueOf(customConfig.Global)
-	params := []string{}
+	baseLineParams := []string{}
+	capacityParams := []string{}
 	for i := 0; i < globalFiled.NumField(); i++ {
 		f := globalFiled.Field(i)
-		_, skip := f.Tag.Lookup("skip")
-		if skip {
+		name, exist := f.Tag.Lookup("json")
+		if !exist {
 			continue
 		}
-		params = append(params, "--"+f.Tag.Get("json")+"="+globalValue.Field(i).Interface().(string))
+		if name != "params" {
+			capacityParams = append(capacityParams, "--"+name+"="+globalValue.Field(i).Interface().(string))
+		} else {
+			baseLineParams = append(baseLineParams, globalValue.Field(i).Interface().([]string)...)
+			capacityParams = append(capacityParams, globalValue.Field(i).Interface().([]string)...)
+		}
 	}
 	for i := 0; i < len(appConfig.App); i++ {
-		appConfig.App[i].Params = append(appConfig.App[i].Params, params...)
+		if appConfig.App[i].Id == 1 {
+			appConfig.App[i].Params = append(appConfig.App[i].Params, baseLineParams...)
+		} else {
+			appConfig.App[i].Params = append(appConfig.App[i].Params, capacityParams...)
+		}
 	}
 }
 

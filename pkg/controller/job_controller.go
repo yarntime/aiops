@@ -33,17 +33,21 @@ func NewJobController(c *types.Config) *JobController {
 	}
 }
 
-func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application) *batch.CronJob {
+func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application, objParams []string) *batch.CronJob {
 	labels := map[string]string{
-		"type": AIOpsJobs,
-		"tier": appConf.Application,
-		"id":   strconv.Itoa(obj.ID),
+		"type":         AIOpsJobs,
+		"tier":         appConf.Application,
+		"id":           strconv.Itoa(obj.ID),
+		"monitor_id":   strconv.Itoa(appConf.Id),
+		"monitor_type": appConf.Application,
 	}
-	objParams := []string{
+	objParams = append(objParams, []string{
 		fmt.Sprintf("--host=%s", obj.Host),
 		fmt.Sprintf("--instance_name=%s", obj.InstanceName),
 		fmt.Sprintf("--kpi=%s", obj.Metric),
-	}
+		fmt.Sprintf("--index=%s", obj.ESIndex),
+		fmt.Sprintf("--doc_type=%s", obj.ESType),
+	}...)
 	allParams := append(appConf.Params, objParams...)
 	return &batch.CronJob{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -89,8 +93,8 @@ func componentResources(cpu string) v1.ResourceRequirements {
 	}
 }
 
-func (jc *JobController) CreateTrainingJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application) {
-	job := componentCronJob(obj, customConf, appConf)
+func (jc *JobController) CreateTrainingJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application, objParams []string) {
+	job := componentCronJob(obj, customConf, appConf, objParams)
 	_, err := jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).Create(job)
 	if err != nil {
 		glog.Errorf("Failed to create training job: %s/%s, %s", job.Namespace, job.Name, err.Error())
