@@ -16,8 +16,6 @@ data:
              "mysql_db":"skyform_aiops",
              "params": [
              "--es_hosts=10.15.1.30:9200",
-             "--index=metric",
-             "--doc_type=metric",
              "--timename=createTime"
              ]
         }
