@@ -14,6 +14,7 @@ import (
 	batch "k8s.io/client-go/pkg/apis/batch/v2alpha1"
 	"k8s.io/client-go/pkg/util"
 	"strconv"
+	"time"
 )
 
 const (
@@ -100,15 +101,31 @@ func componentResources(cpu string, mem string) v1.ResourceRequirements {
 	return result
 }
 
-func (jc *JobController) CreateTrainingJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application, objParams []string) {
+func (jc *JobController) CreateCronJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application, objParams []string) (*batch.CronJob, error) {
 	job := componentCronJob(obj, customConf, appConf, objParams)
-	_, err := jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).Create(job)
+	job, err := jc.k8sClient.BatchV2alpha1().CronJobs(job.Namespace).Create(job)
 	if err != nil {
-		glog.Errorf("Failed to create training job: %s/%s, %s", job.Namespace, job.Name, err.Error())
+		glog.Errorf("Failed to create cron job: %s/%s, %s", job.Namespace, job.Name, err.Error())
+	}
+	return job, err
+}
+
+func (jc *JobController) CreateJobFromCronJob(cj *batch.CronJob) {
+	suffix := "-" + strconv.Itoa(int(time.Now().Unix()))
+	job := &batchv1.Job{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      cj.Name + suffix,
+			Namespace: cj.Namespace,
+		},
+		Spec: cj.Spec.JobTemplate.Spec,
+	}
+	_, err := jc.k8sClient.BatchV1().Jobs(job.Namespace).Create(job)
+	if err != nil {
+		glog.Errorf("Failed to create job: %s/%s, %s", job.Namespace, job.Name, err.Error())
 	}
 }
 
-func (jc *JobController) DeleteTrainingJob(customConf types.CustomConfig) {
+func (jc *JobController) DeleteCronJob(customConf types.CustomConfig) {
 	selector := labels.Set(map[string]string{"type": AIOpsJobs}).AsSelector()
 	listOptions := meta_v1.ListOptions{
 		LabelSelector: selector.String(),

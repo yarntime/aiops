@@ -26,6 +26,7 @@ type GlobalConfig struct {
 	FailedJobsHistoryLimit     int32
 	ConcurrencyPolicy          string
 	ImagePullPolicy            string
+	TriggerJobOnCreation       bool
 }
 
 type CustomConfig struct {

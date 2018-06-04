@@ -25,16 +25,22 @@ func NewController(c *v1.Config) *Controller {
 }
 
 func (c *Controller) Create(w http.ResponseWriter, req *http.Request) {
-	glog.V(3).Info("scan the monitor objects, create the cron jobs")
+	glog.V(3).Info("scan the monitor objects, create cron jobs")
 
-	c.jobController.DeleteTrainingJob(c.customConfig)
+	c.jobController.DeleteCronJob(c.customConfig)
 	monitorObjects := c.dbWorker.List()
 	for _, monitorObject := range monitorObjects {
 		glog.Infof("creating cronjob for monitor object: %v\n", monitorObject)
 		for _, appConf := range c.appConfig.App {
 			if monitorObject.MonitorTypes&appConf.Id != 0 {
 				objParams := c.dbWorker.GetParams(monitorObject.Metric, appConf.Id)
-				c.jobController.CreateTrainingJob(monitorObject, c.customConfig, appConf, objParams)
+				job, err := c.jobController.CreateCronJob(monitorObject, c.customConfig, appConf, objParams)
+				if err != nil {
+					continue
+				}
+				if c.customConfig.Global.TriggerJobOnCreation {
+					c.jobController.CreateJobFromCronJob(job)
+				}
 			}
 		}
 	}
@@ -49,10 +55,10 @@ func (c *Controller) Create(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *Controller) Delete(w http.ResponseWriter, req *http.Request) {
-	c.jobController.DeleteTrainingJob(c.customConfig)
+	c.jobController.DeleteCronJob(c.customConfig)
 	res := &v1.ApiResponse{
 		Code:    200,
-		Message: "Successful to delete all training jobs.",
+		Message: "Successful to delete all cron jobs.",
 	}
 
 	r, _ := json.Marshal(res)
