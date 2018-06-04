@@ -19,6 +19,7 @@ var (
 	failedJobsHistoryLimit     int
 	concurrencyPolicy          string
 	imagePullPolicy            string
+	triggerJobOnCreation       bool
 	/*mysqlHost string
 	mysqlUser string
 	mysqlPassword string
@@ -34,6 +35,7 @@ func init() {
 	flag.IntVar(&failedJobsHistoryLimit, "failed_jobs_history_limit", 2, "failed jobs history limit")
 	flag.StringVar(&concurrencyPolicy, "concurrency_policy", "Forbid", "concurrency policy, support Allow, Forbid and Replace, default to Forbid")
 	flag.StringVar(&imagePullPolicy, "image_pull_policy", "IfNotPresent", "image pull policy, support Always, Never and IfNotPresent, default to IfNotPresent")
+	flag.BoolVar(&triggerJobOnCreation, "trigger_job_on_creation", false, "trigger job on cronjob creation")
 	/*flag.StringVar(&mysqlHost, "mysql_host", "192.168.254.44:31786", "mysql host")
 	flag.StringVar(&mysqlUser, "mysql_user", "root", "mysql user")
 	flag.StringVar(&mysqlPassword, "mysql_password", "password", "mysql password")
@@ -52,6 +54,7 @@ func main() {
 			FailedJobsHistoryLimit:     int32(failedJobsHistoryLimit),
 			ConcurrencyPolicy:          concurrencyPolicy,
 			ImagePullPolicy:            imagePullPolicy,
+			TriggerJobOnCreation:       triggerJobOnCreation,
 		},
 	}
 	err := LoadConfig(globalConfig, &customConfig)
