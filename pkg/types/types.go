@@ -1,12 +1,14 @@
 package types
 
 type Application struct {
-	Application string   `json:"application"`
-	Id          int      `json:"id"`
-	Image       string   `json:image`
-	Cmd         []string `json:"cmd"`
-	Cron        string   `json:"cron"`
-	Params      []string `json:"params"`
+	Application   string   `json:"application"`
+	Id            int      `json:"id"`
+	Image         string   `json:image`
+	Cmd           []string `json:"cmd"`
+	Cron          string   `json:"cron"`
+	CpuRequest    string   `json:"cpuRequest"`
+	MemoryRequest string   `json:"memoryRequest"`
+	Params        []string `json:"params"`
 }
 
 type ApplicationConfig struct {

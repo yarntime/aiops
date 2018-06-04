@@ -73,7 +73,7 @@ func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, a
 									ImagePullPolicy: v1.PullPolicy(customConf.Global.ImagePullPolicy),
 									Command:         appConf.Cmd,
 									Args:            allParams,
-									Resources:       componentResources("500m"),
+									Resources:       componentResources(appConf.CpuRequest, appConf.MemoryRequest),
 								},
 							},
 							RestartPolicy: v1.RestartPolicyOnFailure,
@@ -85,12 +85,19 @@ func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, a
 	}
 }
 
-func componentResources(cpu string) v1.ResourceRequirements {
-	return v1.ResourceRequirements{
-		Requests: v1.ResourceList{
-			v1.ResourceName(v1.ResourceCPU): resource.MustParse(cpu),
-		},
+func componentResources(cpu string, mem string) v1.ResourceRequirements {
+	result := v1.ResourceRequirements{
+		Requests: v1.ResourceList{},
 	}
+
+	if len(cpu) != 0 {
+		result.Requests[v1.ResourceName(v1.ResourceCPU)] = resource.MustParse(cpu)
+	}
+
+	if len(mem) != 0 {
+		result.Requests[v1.ResourceName(v1.ResourceMemory)] = resource.MustParse(mem)
+	}
+	return result
 }
 
 func (jc *JobController) CreateTrainingJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application, objParams []string) {
