@@ -28,6 +28,7 @@ data:
              "image": "registry.harbor:5000/sky-aiops/capacity:zw180507",
              "cmd": ["python","main.py"],
              "cron": "*/30 * * * *",
+             "cpuRequest": "100m",
              "params": []
         },
         {
@@ -36,6 +37,7 @@ data:
              "image": "registry.harbor:5000/sky-aiops/baseline:zw180507",
              "cmd": ["python","main.py"],
              "cron": "*/30 * * * *",
+             "cpuRequest": "100m",  
              "params":[]
         }]
     }
