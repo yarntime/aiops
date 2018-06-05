@@ -20,6 +20,8 @@ var (
 	concurrencyPolicy          string
 	imagePullPolicy            string
 	triggerJobOnCreation       bool
+	jobCountLimit              int
+	jobProcessPeriod           time.Duration
 	/*mysqlHost string
 	mysqlUser string
 	mysqlPassword string
@@ -36,6 +38,8 @@ func init() {
 	flag.StringVar(&concurrencyPolicy, "concurrency_policy", "Forbid", "concurrency policy, support Allow, Forbid and Replace, default to Forbid")
 	flag.StringVar(&imagePullPolicy, "image_pull_policy", "IfNotPresent", "image pull policy, support Always, Never and IfNotPresent, default to IfNotPresent")
 	flag.BoolVar(&triggerJobOnCreation, "trigger_job_on_creation", false, "trigger job on cronjob creation")
+	flag.IntVar(&jobCountLimit, "job_count_limit", 50, "the maximum number of jobs that can be submitted to kubernetes in a processing period. If trigger_job_on_creation is not true, this flag is irrelevant")
+	flag.DurationVar(&jobProcessPeriod, "job_process_period", 10*time.Minute, "job processing period. If trigger_job_on_creation is not true, this flag is irrelevant")
 	/*flag.StringVar(&mysqlHost, "mysql_host", "192.168.254.44:31786", "mysql host")
 	flag.StringVar(&mysqlUser, "mysql_user", "root", "mysql user")
 	flag.StringVar(&mysqlPassword, "mysql_password", "password", "mysql password")
@@ -55,6 +59,8 @@ func main() {
 			ConcurrencyPolicy:          concurrencyPolicy,
 			ImagePullPolicy:            imagePullPolicy,
 			TriggerJobOnCreation:       triggerJobOnCreation,
+			JobCountLimit:              int32(jobCountLimit),
+			JobProcessPeriod:           jobProcessPeriod,
 		},
 	}
 	err := LoadConfig(globalConfig, &customConfig)
@@ -77,6 +83,11 @@ func main() {
 	}
 
 	c := controller.NewController(config)
+
+	if customConfig.Global.TriggerJobOnCreation {
+		stop := make(chan struct{})
+		go c.Run(stop)
+	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/health", health).Methods("GET")
