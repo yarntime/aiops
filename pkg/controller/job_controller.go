@@ -8,11 +8,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	batchv1 "k8s.io/client-go/pkg/apis/batch/v1"
 	batch "k8s.io/client-go/pkg/apis/batch/v2alpha1"
 	"k8s.io/client-go/pkg/util"
+	"k8s.io/client-go/util/workqueue"
 	"strconv"
 	"time"
 )
@@ -25,13 +27,57 @@ const (
 type JobController struct {
 	k8sClient *k8s.Clientset
 	config    *types.Config
+	// Jobs that need to be updated
+	queue         workqueue.RateLimitingInterface
+	currentCount  int32
+	countLimit    int32
+	processPeriod time.Duration
 }
 
 func NewJobController(c *types.Config) *JobController {
 	return &JobController{
-		k8sClient: client.NewK8sClint(c.Host),
-		config:    c,
+		k8sClient:     client.NewK8sClint(c.Host),
+		config:        c,
+		queue:         workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "job"),
+		currentCount:  0,
+		countLimit:    c.CustomCfg.Global.JobCountLimit,
+		processPeriod: c.CustomCfg.Global.JobProcessPeriod,
 	}
+}
+
+func (jc *JobController) Run(stopCh <-chan struct{}) {
+	glog.Infof("Starting job worker")
+	defer glog.Infof("Shutting down job worker")
+	go wait.Until(jc.worker, time.Second, stopCh)
+	<-stopCh
+}
+
+func (jc *JobController) worker() {
+	for jc.processNextWorkItem() {
+		jc.currentCount++
+		if jc.currentCount == jc.countLimit {
+			jc.currentCount = 0
+			time.Sleep(jc.processPeriod)
+		}
+	}
+}
+
+func (jc *JobController) processNextWorkItem() bool {
+	key, quit := jc.queue.Get()
+	if quit {
+		return false
+	}
+	defer jc.queue.Done(key)
+
+	job := key.(*batchv1.Job)
+
+	glog.V(4).Info("Creating job %s/%s", job.Namespace, job.Name)
+	_, err := jc.k8sClient.BatchV1().Jobs(job.Namespace).Create(job)
+	if err != nil {
+		glog.Errorf("Failed to create job: %s/%s, %s", job.Namespace, job.Name, err.Error())
+	}
+	glog.V(4).Info("Creating job %s/%s", job.Namespace, job.Name)
+	return true
 }
 
 func componentCronJob(obj *types.MonitorObject, customConf types.CustomConfig, appConf types.Application, objParams []string) *batch.CronJob {
@@ -119,10 +165,10 @@ func (jc *JobController) CreateJobFromCronJob(cj *batch.CronJob) {
 		},
 		Spec: cj.Spec.JobTemplate.Spec,
 	}
-	_, err := jc.k8sClient.BatchV1().Jobs(job.Namespace).Create(job)
-	if err != nil {
-		glog.Errorf("Failed to create job: %s/%s, %s", job.Namespace, job.Name, err.Error())
-	}
+
+	glog.V(4).Info("Putting job %s/%s in the queue", job.Namespace, job.Name)
+
+	jc.queue.Add(job)
 }
 
 func (jc *JobController) DeleteCronJob(customConf types.CustomConfig) {

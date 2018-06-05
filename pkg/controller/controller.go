@@ -24,6 +24,10 @@ func NewController(c *v1.Config) *Controller {
 	}
 }
 
+func (c *Controller) Run(stopCh <-chan struct{}) {
+	c.jobController.Run(stopCh)
+}
+
 func (c *Controller) Create(w http.ResponseWriter, req *http.Request) {
 	glog.V(3).Info("scan the monitor objects, create cron jobs")
 

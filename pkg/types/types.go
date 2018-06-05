@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type Application struct {
 	Application   string   `json:"application"`
 	Id            int      `json:"id"`
@@ -27,6 +29,8 @@ type GlobalConfig struct {
 	ConcurrencyPolicy          string
 	ImagePullPolicy            string
 	TriggerJobOnCreation       bool
+	JobCountLimit              int32
+	JobProcessPeriod           time.Duration
 }
 
 type CustomConfig struct {
