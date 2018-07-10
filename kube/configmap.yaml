@@ -18,7 +18,42 @@ data:
              "--es_hosts=10.15.1.30:9200",
              "--timename=createTime"
              ]
-        }
+        },
+		"DB_map": [
+         {
+           "table_name": "monitor_obj",
+           "column_map": [
+                {
+                    "column": "host",
+                    "parameter": "--host",
+                },
+                {
+                    "column": "host",
+                    "parameter": "--host",
+                },
+                {
+                    "column": "instance_name",
+                    "parameter": "--instance_name",
+                },
+                {
+                    "column": "metric",
+                    "parameter": "--kpi",
+                },
+                {
+                    "column": "es_index",
+                    "parameter": "--index",
+                },
+                {
+                    "column": "es_type",
+                    "parameter": "--doc_type",
+                },
+                {
+                    "column": "sample_rate",
+                    "parameter": "--freq",
+                }
+            ]
+          }
+       ]
     }
   application.json: |-
     {
